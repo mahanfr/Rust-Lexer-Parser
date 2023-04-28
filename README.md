@@ -44,7 +44,7 @@ Use the `docs/README.md` to get started.
 - [x] Tokenize block of code
 - [ ] Read command line arguments
 - [ ] Parse tokens and generate ast
-    - [ ] function
+    - [x] function
     - [ ] variable definition
     - [ ] operation
     - [ ] if statments
