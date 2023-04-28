@@ -1,0 +1,22 @@
+$name string :: "Hello my \n \" \" \" is \r\n\t mahan"
+''
+$ch char :: '\'';
+include "std"
+
+$name u8 :: 43;
+
+$mahan f32 :: 0;
+
+$main(a f32, b f32) f32 {
+    return a + b;
+}
+
+$Hello struct {
+    $foo string,
+    $bar char,
+    $new() self {},
+}
+
+$Hello enum {
+
+}
