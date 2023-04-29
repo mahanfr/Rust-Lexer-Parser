@@ -4,7 +4,6 @@ use std::{process::exit, vec};
 
 use parser::{Lexer, TToken, Token};
 
-
 #[derive(Debug)]
 struct Program {
     shebang: String,
@@ -34,12 +33,12 @@ impl Program {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 struct Type {
     name: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 struct VariableDelclear {
     is_const: bool,
     is_static: bool,
@@ -48,41 +47,75 @@ struct VariableDelclear {
     // TODO: Change this shit
     init_value: String,
 }
+
+
+// [ident, ident, semicolon]
+// [ident, ident, colon, colon, value, semicolon]
+// [ident, ident, colon, value, semicolon]
+// [ident, ident, equal, value, semicolon]
+// [ident, colon, value, semicolon]
+// [ident, equal, value, semicolon]
 impl VariableDelclear {
     fn new(lexer: &mut Lexer) -> Self {
-        let mut token = expect_token(lexer, vec![TToken::Identifier]);
-        let ident = token.get_literal_string();
-        token = expect_token(lexer, vec![TToken::Identifier,TToken::COLON,TToken::EQ]);
-        let kind: Type;
         let is_const: bool;
         let is_static: bool;
-        if token.ttype == TToken::Identifier {
-            kind = Type { name: token.get_literal_string() };
-            token = expect_token(lexer, vec![TToken::COLON,TToken::EQ,TToken::SEMICOLON]);
-        }else{
-            kind = Type { name: "undifiend".to_string() };
-            token = expect_token(lexer, vec![TToken::COLON,TToken::EQ,TToken::SEMICOLON]);
-        }
-        if token.ttype == TToken::SEMICOLON {
-            return Self{is_const: false, is_static:false, ident, kind, init_value: String::new()};
-        }
-
-        if token.ttype == TToken::COLON {
-            is_const = true;
-            token = expect_token(lexer, vec![TToken::COLON,TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
-            if token.ttype == TToken::COLON {
-                is_static = true;
-                token = expect_token(lexer, vec![TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
-            }else{
+        let ident: String;
+        let kind: Type;
+        let init_value: String;
+        let mut token = expect_token(lexer, vec![TToken::Identifier]);
+        ident = token.get_literal_string();
+        token = expect_token(lexer, vec![TToken::Identifier,TToken::COLON,TToken::EQ]);
+        match token.ttype {
+            TToken::Identifier => {
+                kind = Type { name: token.get_literal_string() };
+                token = expect_token(lexer, vec![TToken::COLON,TToken::EQ,TToken::SEMICOLON]);
+                match token.ttype {
+                    TToken::COLON => {
+                        token = expect_token(lexer, vec![TToken::COLON,TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+                        if token.ttype == TToken::COLON {
+                            is_const = true;
+                            is_static = true;
+                            token = expect_token(lexer, vec![TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+                        }else {
+                            is_const = true;
+                            is_static = false;
+                        }
+                        init_value = token.get_literal_string();
+                        expect_token(lexer, vec![TToken::SEMICOLON]);
+                    },
+                    TToken::EQ => {
+                        is_const = false;
+                        is_static = false;
+                        token = expect_token(lexer, vec![TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+                        init_value = token.get_literal_string();
+                        expect_token(lexer, vec![TToken::SEMICOLON]);
+                    },
+                    TToken::SEMICOLON => {
+                        is_const = false;
+                        is_static = false;
+                        init_value = String::new();
+                    },
+                    _ => {unreachable!();}
+                }
+            },
+            TToken::COLON => {
+                kind = Type { name: "undifiend".to_string() };
+                is_const = true;
                 is_static = false;
-            }
-        } else {
-            is_const = false;
-            is_static = false;
-            token = expect_token(lexer, vec![TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+                token = expect_token(lexer, vec![TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+                init_value = token.get_literal_string();
+                expect_token(lexer, vec![TToken::SEMICOLON]);
+            },
+            TToken::EQ => {
+                kind = Type { name: "undifiend".to_string() };
+                is_const = false;
+                is_static = false;
+                token = expect_token(lexer, vec![TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+                init_value = token.get_literal_string();
+                expect_token(lexer, vec![TToken::SEMICOLON]);
+            },
+            _ => {unreachable!();},
         }
-        let init_value = token.get_literal_string();
-        expect_token(lexer, vec![TToken::SEMICOLON]);
         return Self { is_const, is_static, ident, kind, init_value };
     }
 
@@ -156,7 +189,86 @@ pub fn expect_token(lexer: &mut Lexer, types:Vec<TToken>) -> Token {
 
 
 fn main() {
-    let mut lexer = Lexer::from_str("@hello u32 = \"facts\";\nfun main(a b,c d) u32 {}");
+    let mut lexer = Lexer::from_str("@hello = \"facts\";\nfun main(a b,c d) u32 {}");
     let program = Program::new(&mut lexer);
     println!("{:#?}",program);
+}
+
+#[cfg(test)]
+mod parser_tests {
+    use crate::VariableDelclear;
+    use crate::Type;
+    use crate::parser::Lexer;
+
+    #[test]
+    fn dynamic_variable_declearation() {
+        let mut lexer = Lexer::from_str("hello u32;\n");
+        assert_eq!(VariableDelclear::new(&mut lexer),VariableDelclear{
+            is_const: false,
+            is_static: false,
+            ident: "hello".to_string(),
+            kind: Type {
+                name: "u32".to_string(),
+            },
+            init_value: "".to_string(),
+        });
+        let mut lexer = Lexer::from_str("hello = \"facts\";\n");
+        assert_eq!(VariableDelclear::new(&mut lexer),VariableDelclear{
+            is_const: false,
+            is_static: false,
+            ident: "hello".to_string(),
+            kind: Type {
+                name: "undifiend".to_string(),
+            },
+            init_value: "facts".to_string(),
+        });
+        let mut lexer = Lexer::from_str("hello u32 = \"facts\";\n");
+        assert_eq!(VariableDelclear::new(&mut lexer),VariableDelclear{
+            is_const: false,
+            is_static: false,
+            ident: "hello".to_string(),
+            kind: Type {
+                name: "u32".to_string(),
+            },
+            init_value: "facts".to_string(),
+        });
+    }
+
+    #[test]
+    fn const_variable_declearation() {
+        let mut lexer = Lexer::from_str("hello : \"facts\";\n");
+        assert_eq!(VariableDelclear::new(&mut lexer),VariableDelclear{
+            is_const: true,
+            is_static: false,
+            ident: "hello".to_string(),
+            kind: Type {
+                name: "undifiend".to_string(),
+            },
+            init_value: "facts".to_string(),
+        });
+        let mut lexer = Lexer::from_str("hello u32 : \"facts\";\n");
+        assert_eq!(VariableDelclear::new(&mut lexer),VariableDelclear{
+            is_const: true,
+            is_static: false,
+            ident: "hello".to_string(),
+            kind: Type {
+                name: "u32".to_string(),
+            },
+            init_value: "facts".to_string(),
+        });
+    }
+
+    #[test]
+    fn static_variable_declearation() {
+        let mut lexer = Lexer::from_str("hello u32 :: \"facts\";\n");
+        assert_eq!(VariableDelclear::new(&mut lexer),VariableDelclear{
+            is_const: true,
+            is_static: true,
+            ident: "hello".to_string(),
+            kind: Type {
+                name: "u32".to_string(),
+            },
+            init_value: "facts".to_string(),
+        });
+    }
 }
