@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 mod parser;
 use std::{process::exit, vec};
 
@@ -16,9 +17,9 @@ impl Program {
         loop {
             let token = lexer.next_token();
             if token.ttype == TToken::Fun {
-                body.push(Func::new(lexer));
+                body.push(Func::get_node(lexer));
             }else if token.ttype == TToken::ATSIGN {
-                todo!("Not Implemented");
+                body.push(VariableDelclear::get_node(lexer));
             }else if token.ttype == TToken::EOF {
                 break;
             }else {
@@ -47,6 +48,48 @@ struct VariableDelclear {
     // TODO: Change this shit
     init_value: String,
 }
+impl VariableDelclear {
+    fn new(lexer: &mut Lexer) -> Self {
+        let mut token = expect_token(lexer, vec![TToken::Identifier]);
+        let ident = token.get_literal_string();
+        token = expect_token(lexer, vec![TToken::Identifier,TToken::COLON,TToken::EQ]);
+        let kind: Type;
+        let is_const: bool;
+        let is_static: bool;
+        if token.ttype == TToken::Identifier {
+            kind = Type { name: token.get_literal_string() };
+            token = expect_token(lexer, vec![TToken::COLON,TToken::EQ,TToken::SEMICOLON]);
+        }else{
+            kind = Type { name: "undifiend".to_string() };
+            token = expect_token(lexer, vec![TToken::COLON,TToken::EQ,TToken::SEMICOLON]);
+        }
+        if token.ttype == TToken::SEMICOLON {
+            return Self{is_const: false, is_static:false, ident, kind, init_value: String::new()};
+        }
+
+        if token.ttype == TToken::COLON {
+            is_const = true;
+            token = expect_token(lexer, vec![TToken::COLON,TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+            if token.ttype == TToken::COLON {
+                is_static = true;
+                token = expect_token(lexer, vec![TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+            }else{
+                is_static = false;
+            }
+        } else {
+            is_const = false;
+            is_static = false;
+            token = expect_token(lexer, vec![TToken::Number,TToken::StringLiteral,TToken::CharLiteral,TToken::Identifier]);
+        }
+        let init_value = token.get_literal_string();
+        expect_token(lexer, vec![TToken::SEMICOLON]);
+        return Self { is_const, is_static, ident, kind, init_value };
+    }
+
+    fn get_node(lexer: &mut Lexer) -> Node {
+        Node::VariableDelclear { var: Self::new(lexer) }
+    }
+}
 
 #[derive(Debug)]
 struct Arg {
@@ -62,7 +105,7 @@ struct Func {
     block: Vec<Node>,
 }
 impl Func {
-    pub fn new(lexer: &mut Lexer) -> Node {
+    pub fn new(lexer: &mut Lexer) -> Self {
         let token = expect_token(lexer, vec![TToken::Identifier]);
         let ident = String::from_utf8(token.literal).unwrap();
         expect_token(lexer, vec![TToken::OPAREN]);
@@ -81,16 +124,18 @@ impl Func {
         let return_type = Type { name: String::from_utf8(token.literal).unwrap() };
         expect_token(lexer, vec![TToken::OCURLY]);
         expect_token(lexer, vec![TToken::CCURLY]);
-        return Node::Func { var: Func { ident , args, return_type, block: Vec::new() } };
+        return Self { ident , args, return_type, block: Vec::new() } ;
+    }
+    pub fn get_node(lexer: &mut Lexer) -> Node {
+        Node::Func { var: Self::new(lexer) }
     }
 
 }
 
 #[derive(Debug)]
 enum Node {
-    Program {var: Program},
     Func {var: Func},
-    Type {var: Type},
+    VariableDelclear { var: VariableDelclear }
 }
 
 
@@ -111,7 +156,7 @@ pub fn expect_token(lexer: &mut Lexer, types:Vec<TToken>) -> Token {
 
 
 fn main() {
-    let mut lexer = Lexer::from_str("fun main(a b,c d) u32 {}");
+    let mut lexer = Lexer::from_str("@hello u32 = \"facts\";\nfun main(a b,c d) u32 {}");
     let program = Program::new(&mut lexer);
     println!("{:#?}",program);
 }

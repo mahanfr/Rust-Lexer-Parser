@@ -115,6 +115,10 @@ impl Token {
     pub fn new(ttype: TToken, literal: Vec<u8>,loc : Loc) -> Self {
         Self {ttype, literal, file_path: loc.0, line: loc.1, col: loc.2}
     }
+
+    pub fn get_literal_string(&self) -> String {
+        String::from_utf8(self.literal.to_vec()).unwrap()
+    }
 }
 
 impl Lexer {
