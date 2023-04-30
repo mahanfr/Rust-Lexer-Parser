@@ -16,20 +16,43 @@ pub enum TToken {
     OBRACE,
     CBRACE,
     COMMA,
+    DOT,
     COLON,
     SEMICOLON,
-    MINUS,
+    // relational oprators
+    EQEQ, // ==
+    NOTEQ, // !=
+    LESSEQ, // <=
+    MOREEQ, // >=
+    LESS, // <
+    MORE, // >
+    // assign
+    EQ, // =
+    PLUSEQ, // +=
+    SUBEQ, // -=
+    MULTYEQ, // *=
+    DEVIDEEQ, // /=
+    MODEQ, // %=
+    ANDEQ, // &=
+    OREQ, // |=
+    XOREQ, // ^=
+    // logical opration
+    NOT, // !
+    ANDAND, // &&
+    OROR, // ||
+    // bitwise 
+    AND, // &
+    OR, // |
+    XOR, // ^
+    LEFTSHIFT, // <<
+    RIGHTSHIFT, // >>
+    // opration
+    SUB,
     PLUS,
-    EQ,
     MULTY,
     DEVIDE,
     MOD,
-    NOT,
-    DOT,
-    SMALLER,
-    BIGGER,
-    AND,
-    OR,
+    // keywords
     IF,
     Fun,
     ELSE,
@@ -59,7 +82,7 @@ impl TToken {
             b',' => {Some(TToken::COMMA)},
             b'.' => {Some(TToken::DOT)},
             b';' => {Some(TToken::SEMICOLON)},
-            b'-' => {Some(TToken::MINUS)},
+            b'-' => {Some(TToken::SUB)},
             b'+' => {Some(TToken::PLUS)},
             b'*' => {Some(TToken::MULTY)},
             b'/' => {Some(TToken::DEVIDE)},
@@ -69,10 +92,37 @@ impl TToken {
             b'@' => {Some(TToken::ATSIGN)},
             b':' => {Some(TToken::COLON)},
             b'=' => {Some(TToken::EQ)},
-            b'<' => {Some(TToken::SMALLER)},
-            b'>' => {Some(TToken::BIGGER)},
+            b'<' => {Some(TToken::LESS)},
+            b'>' => {Some(TToken::MORE)},
             b'&' => {Some(TToken::AND)},
             b'|' => {Some(TToken::OR)},
+            _ => {None}
+        }
+    }
+
+    pub fn is_double_char_token(first: u8,next: u8) -> Option<TToken> {
+        let double_char = [first,next];
+        match double_char.as_ref() {
+            b"==" => {Some(TToken::EQEQ)},
+            b"!=" => {Some(TToken::NOTEQ)},
+            b"<=" => {Some(TToken::LESSEQ)},
+            b">=" => {Some(TToken::MOREEQ)},
+
+            b"+=" => {Some(TToken::PLUSEQ)},
+            b"-=" => {Some(TToken::SUBEQ)},
+            b"*=" => {Some(TToken::MULTYEQ)},
+            b"/=" => {Some(TToken::DEVIDEEQ)},
+            b"%=" => {Some(TToken::MODEQ)},
+            b"&=" => {Some(TToken::ANDEQ)},
+            b"|=" => {Some(TToken::OREQ)},
+            b"^=" => {Some(TToken::XOREQ)},
+
+            b"&&" => {Some(TToken::ANDAND)},
+            b"||" => {Some(TToken::OROR)},
+
+            b"<<" => {Some(TToken::LEFTSHIFT)},
+            b">>" => {Some(TToken::RIGHTSHIFT)},
+
             _ => {None}
         }
     }
@@ -330,6 +380,18 @@ impl Lexer {
         match TToken::is_single_char_token(first) {
             Some(tt) => {
                 self.drop_char();
+                if !self.is_empty(){
+                    let next = self.source[self.cur];
+                    if TToken::is_single_char_token(next).is_some() {
+                        match TToken::is_double_char_token(first, next) {
+                            Some(dtt) => {
+                                self.drop_char();
+                                return Token::new(dtt,vec![first,next],loc);
+                            },
+                            None => ()
+                        }
+                    }
+                }
                 return Token::new(tt,[first].to_vec(),loc);
             },
             None => ()

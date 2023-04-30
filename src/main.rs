@@ -38,6 +38,21 @@ struct Type {
     name: String,
 }
 
+#[derive(Debug, PartialEq)]
+enum Expr {
+    ExprBinary,
+    ExprUnary,
+}
+
+#[derive(Debug, PartialEq)]
+struct ExprPath {}
+
+#[derive(Debug, PartialEq)]
+struct ExprAssign {
+    left: ExprPath,
+    right: Expr,
+}
+
 #[derive(Debug,PartialEq)]
 struct VariableDelclear {
     is_const: bool,
@@ -47,7 +62,6 @@ struct VariableDelclear {
     // TODO: Change this shit
     init_value: String,
 }
-
 
 // [ident, ident, semicolon]
 // [ident, ident, colon, colon, value, semicolon]
