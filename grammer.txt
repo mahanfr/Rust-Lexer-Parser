@@ -1,6 +1,0 @@
-logical_or_expression: logical_and_exression | logical_or_expression '||' logical_and_exression;
-conditional_expr : logical_or_expression | logical_or_expression ? expression : conditional_expr;
-assignment_oprator: '='|'*='|'/='|'%='|'+='|'-='|'^='|'&='|'|=';
-assign_expr: conditional_expr | unary_expr assign_oprator assign_expr;
-expr : assign_expr (',' assign_expr )*;
-primary_expr : ident | string_expr | '(' expr ')';

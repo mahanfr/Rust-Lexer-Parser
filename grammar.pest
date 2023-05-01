@@ -1,0 +1,7 @@
+program_file = _{SOI ~ (function_defin | variable_declear)+ ~ EOI}
+variable_declear = {"static" ~ ident ~ type ~ "::" ~ integer ~ ";"}
+function_defin = {"func" ~ ident ~ "(" ~ ")" ~ type ~ "{" ~ "}"}
+type = {"@" ~ (ident | "u32")}
+ident = @{ ( ASCII_ALPHA | "_") ~ ( ASCII_ALPHANUMERIC | "_" )*}
+integer = {('0'..'9')+}
+WHITESPACE = _{ " " | NEWLINE}
