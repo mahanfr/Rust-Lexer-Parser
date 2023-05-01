@@ -402,6 +402,13 @@ impl Lexer {
     }
 }
 
+pub fn expect_non_empty_token(token: &Token){
+    if token.ttype == TToken::EOF {
+        println!("expect token found EOF {}:{}:{}",token.file_path,token.line,token.col);
+        exit(1);
+    }
+}
+
 pub fn expect_token(lexer: &mut Lexer, types:Vec<TToken>) -> Token {
     let token = lexer.next_token();
     

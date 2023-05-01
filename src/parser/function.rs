@@ -1,5 +1,5 @@
 use crate::lexer::{Lexer, TToken,expect_token};
-use crate::parser::{program::Node,expr::{ExprPath,get_expretion},definition::{Arg,Type}};
+use crate::parser::{program::Node,expr::{ExprPath,get_expr},definition::{Arg,Type}};
 
 #[derive(Debug)]
 pub struct Func {
@@ -41,8 +41,8 @@ impl Func {
                     let _ident_token = token;
                     token = lexer.next_token();
                     if token.ttype == TToken::EQ {
-                        let left = ExprPath {};
-                        let right = get_expretion(lexer);
+                        let _left = ExprPath {};
+                        let _right = get_expr(lexer);
                         todo!("ExprAssign  left, right ");
                     }
                 }else {
