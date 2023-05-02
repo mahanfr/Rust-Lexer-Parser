@@ -1,7 +1,40 @@
 program_file = _{SOI ~ (function_defin | variable_declear)+ ~ EOI}
-variable_declear = {"static" ~ ident ~ type ~ "::" ~ integer ~ ";"}
+variable_declear = {"static" ~ ident ~ type ~ "::" ~ expr ~ ";"}
 function_defin = {"func" ~ ident ~ "(" ~ ")" ~ type ~ "{" ~ "}"}
 type = {"@" ~ (ident | "u32")}
 ident = @{ ( ASCII_ALPHA | "_") ~ ( ASCII_ALPHANUMERIC | "_" )*}
-integer = {('0'..'9')+}
+
+indexing_expression = {(ident ~ "[" ~ integer_literal ~ "]")}
+assignable_expression = _{ident | indexing_expression}
+assignment_expression = { assignable_expression ~ assignment_op ~ expr ~ ";" }
+assignment_op = {"="|"+="|"-="|"/="|"%="|"&="|"|="|"^="}
+
+expr = {atom ~ (bin_op ~ atom)*}
+unary_op = {sub | add}
+atom = _{ unary_op? ~ primary }
+bin_op = _{ add | sub | multi | divide | mod | and | or | xor | lsh | rsh}
+primary = { calculative_values | "(" ~ expr ~ ")" }
+calculative_values = _{(ident | number | indexing_expression)}
+
+add = {"+"}
+sub = {"-"}
+multi = {"*"}
+divide = {"/"}
+mod = {"%"}
+and = {"&"}
+or = {"|"}
+xor = {"^"}
+lsh = {"<<"}
+rsh = {">>"}
+
+number = {integer_literal | float_literal | binary_literal}
+integer_literal = @{('0'..'9')+}
+float_literal = @{(integer_literal ~ "f") | (integer_literal ~ "." ~ integer_literal ~ "f"?) }
+binary_literal = @{(("0" | "1")+ ~ "b2") | (("0" | "8")+ ~ "b8") | (('0'..'9' | 'a'..'f')+ ~ "b16")}
+
+logical_literal = {"true"|"false"}
+string_literal = {"\"" ~ (!NEWLINE ~ ANY)* ~ "\""}
+char_literal = {"\'" ~ (!NEWLINE ~ ANY){1} ~ "\'"}
+
+_COMMENT   = { "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 WHITESPACE = _{ " " | NEWLINE}

@@ -10,7 +10,7 @@ struct NemetParser;
 
 fn main() {
     let pairs = NemetParser::parse(Rule::program_file, 
-            "static name @u32 :: 32;\nfunc m2() @cum {} \n"
+            "static name @u32 :: 32 + 2;\nfunc m2() @cum {} \n"
         )
         .unwrap_or_else(|e| panic!("{}", e));
     for pair in pairs {
