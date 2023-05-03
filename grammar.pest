@@ -1,13 +1,20 @@
-program_file = _{SOI ~ (function_defin | variable_declear)+ ~ EOI}
-variable_declear = {"static" ~ ident ~ type ~ "::" ~ expr ~ ";"}
-function_defin = {"func" ~ ident ~ "(" ~ ")" ~ type ~ "{" ~ "}"}
-type = {"@" ~ (ident | "u32")}
-ident = @{ ( ASCII_ALPHA | "_") ~ ( ASCII_ALPHANUMERIC | "_" )*}
+program_file = _{SOI ~ (function_defin | static_variable_declear)+ ~ EOI}
+static_variable_declear = {"static" ~ ident ~ type ~ "::" ~ expr ~ ";"}
+const_variable_declear = {"const" ~ ident ~ ((type? ~ ":" ~ expr) | type) ~ ";"}
+mut_variable_declear = {"mut" ~ ident ~ ((type? ~ "=" ~ expr) | type) ~ ";"}
+function_defin = {"func" ~ ident ~ "(" ~ ")" ~ type? ~ block}
+
+
+block = {"{" ~ stmt* ~ "}"}
+variable_declear_stmt = _{const_variable_declear | mut_variable_declear}
+stmt = _{assignment_expression | variable_declear_stmt| debug_print}
 
 indexing_expression = {(ident ~ "[" ~ integer_literal ~ "]")}
 assignable_expression = _{ident | indexing_expression}
 assignment_expression = { assignable_expression ~ assignment_op ~ expr ~ ";" }
 assignment_op = {"="|"+="|"-="|"/="|"%="|"&="|"|="|"^="}
+
+debug_print = {"#" ~ expr ~ ";"}
 
 expr = {atom ~ (bin_op ~ atom)*}
 unary_op = {sub | add}
@@ -15,6 +22,18 @@ atom = _{ unary_op? ~ primary }
 bin_op = _{ add | sub | multi | divide | mod | and | or | xor | lsh | rsh}
 primary = { calculative_values | "(" ~ expr ~ ")" }
 calculative_values = _{(ident | number | indexing_expression)}
+
+number = _{float_literal | binary_literal | integer_literal}
+integer_literal = @{ ASCII_DIGIT+ }
+float_literal = @{(integer_literal ~ "f") | (integer_literal ~ "." ~ integer_literal ~ "f"?) }
+binary_literal = @{(ASCII_BIN_DIGIT+ ~ "b2") | (ASCII_OCT_DIGIT+ ~ "b8") | (ASCII_HEX_DIGIT+ ~ "b16")}
+
+logical_literal = {"true"|"false"}
+string_literal = {"\"" ~ (!NEWLINE ~ ANY)* ~ "\""}
+char_literal = {"\'" ~ (!NEWLINE ~ ANY){1} ~ "\'"}
+
+ident = @{ ( ASCII_ALPHA | "_") ~ ( ASCII_ALPHANUMERIC | "_" )*}
+type = {"@" ~ (ident | "i" | "bool" )}
 
 add = {"+"}
 sub = {"-"}
@@ -26,15 +45,6 @@ or = {"|"}
 xor = {"^"}
 lsh = {"<<"}
 rsh = {">>"}
-
-number = {float_literal | binary_literal | integer_literal }
-integer_literal = @{('0'..'9')+}
-float_literal = @{(integer_literal ~ "f") | (integer_literal ~ "." ~ integer_literal ~ "f"?) }
-binary_literal = @{(("0" | "1")+ ~ "b2") | (("0" | "8")+ ~ "b8") | (('0'..'9' | 'a'..'f')+ ~ "b16")}
-
-logical_literal = {"true"|"false"}
-string_literal = {"\"" ~ (!NEWLINE ~ ANY)* ~ "\""}
-char_literal = {"\'" ~ (!NEWLINE ~ ANY){1} ~ "\'"}
 
 _COMMENT   = { "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 WHITESPACE = _{ " " | NEWLINE}
