@@ -45,8 +45,8 @@ Use the `docs/README.md` to get started.
 - [ ] Read command line arguments
 - [ ] Parse tokens and generate ast
     - [x] function
-    - [ ] variable definition
-    - [ ] operation
+    - [x] variable definition
+    - [x] operation
     - [ ] if statments
     - [ ] loops
     - [ ] structs
