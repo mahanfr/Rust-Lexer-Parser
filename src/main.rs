@@ -2,7 +2,7 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-use pest::Parser;
+use pest::{Parser, iterators::Pairs};
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -40,6 +40,15 @@ struct StaticVariableDeclear {
 impl StaticVariableDeclear{
     pub fn new(ident: String, value_type: Type, value: Expr) -> Self {
         Self {ident, value_type, value}
+    }
+    pub fn from_pair(pairs: Pairs<Rule>) -> Self {
+        let mut pairs = pairs.into_iter();
+        let ident = pairs.next().unwrap().to_string();
+        let value_type = Type::get(pairs.next().unwrap().to_string());
+        //TODO: Parse Expr
+        let value = Expr::Int(0);
+        
+        Self { ident, value_type, value }
     }
 }
 
@@ -168,22 +177,16 @@ fn main() {
             "static name @u32 :: 110 + a - 2;\nfunc m2() {} \n"
         )
         .unwrap_or_else(|e| panic!("{}", e));
-    let program = ProgramFile::new("INTERNAL".to_string());
+    let mut program = ProgramFile::new("INTERNAL".to_string());
     for pair in pairs {
         if pair.as_rule() == Rule::static_variable_declear {
-            todo!()
+            program.variables.push(StaticVariableDeclear::from_pair(pair.into_inner()));
         }else if pair.as_rule() == Rule::function_defin {
             todo!()
         }else {
             unreachable!("Program File Can Only Define Static Variables And Functions");
         }
-        for inner_pair in pair.into_inner() {
-            println!("\tRule:    {:?}", inner_pair.as_rule());
-            println!("\tSpan:    {:?}", inner_pair.as_span());
-            println!("\tText:    {}", inner_pair.as_str());
-        }
     }
-
 
 }
 
