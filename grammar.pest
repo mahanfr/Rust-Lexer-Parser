@@ -29,8 +29,8 @@ float_literal = @{(integer_literal ~ "f") | (integer_literal ~ "." ~ integer_lit
 binary_literal = @{(ASCII_BIN_DIGIT+ ~ "b2") | (ASCII_OCT_DIGIT+ ~ "b8") | (ASCII_HEX_DIGIT+ ~ "b16")}
 
 logical_literal = {"true"|"false"}
-string_literal = {"\"" ~ (!NEWLINE ~ ANY)* ~ "\""}
-char_literal = {"\'" ~ (!NEWLINE ~ ANY){1} ~ "\'"}
+string_literal = {"\"" ~ (!"\"" ~ !NEWLINE ~ ANY)* ~ "\""}
+char_literal = {"\'" ~ (!"\'" ~ !NEWLINE ~ ANY){1} ~ "\'"}
 
 ident = @{ ( ASCII_ALPHA | "_") ~ ( ASCII_ALPHANUMERIC | "_" )*}
 type = {"@" ~ (ident | "i" | "bool" )}
@@ -46,5 +46,5 @@ xor = {"^"}
 lsh = {"<<"}
 rsh = {">>"}
 
-_COMMENT   = { "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+COMMENT   = _{ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 WHITESPACE = _{ " " | NEWLINE}
